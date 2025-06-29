@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mini URL Kısaltıcı (localStorage)</title>
+  <style>
+    body {
+      background: linear-gradient(to right, #141e30, #243b55);
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: #fff;
+      margin: 0;
+    }
+    .box {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 30px;
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 0 20px rgba(0,0,0,0.4);
+      text-align: center;
+      width: 350px;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 6px;
+      border: none;
+      margin-top: 10px;
+      font-size: 16px;
+    }
+    button {
+      margin-top: 15px;
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #03e9f4;
+      color: #000;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    #shortened {
+      margin-top: 20px;
+      font-weight: bold;
+      word-break: break-word;
+    }
+    a {
+      color: #03e9f4;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>🔗 URL Kısaltıcı</h2>
+    <input type="text" id="longUrl" placeholder="Uzun URL'yi buraya yapıştır...">
+    <button onclick="shorten()">Kısalt</button>
+    <div id="shortened"></div>
+  </div>
+
+  <script>
+    const repoName = "/LinkK-salt"; // Buraya kendi repo adını yaz
+
+    function getDatabase() {
+      const data = localStorage.getItem('urlShortenerDB');
+      return data ? JSON.parse(data) : {};
+    }
+
+    function saveDatabase(db) {
+      localStorage.setItem('urlShortenerDB', JSON.stringify(db));
+    }
+
+    function generateCode(length = 6) {
+      const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+      let code = "";
+      for (let i = 0; i < length; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return code;
+    }
+
+    function shorten() {
+      const longUrl = document.getElementById("longUrl").value.trim();
+      if (!longUrl) return alert("Lütfen URL giriniz.");
+
+      const db = getDatabase();
+
+      for (const key in db) {
+        if (db[key] === longUrl) {
+          showShortUrl(key);
+          return;
+        }
+      }
+
+      let code;
+      do {
+        code = generateCode();
+      } while (db[code]);
+
+      db[code] = longUrl;
+      saveDatabase(db);
+
+      showShortUrl(code);
+    }
+
+    function showShortUrl(code) {
+      const shortUrl = `${window.location.origin}${repoName}/?r=${code}`;
+      document.getElementById("shortened").innerHTML = `Kısa URL: <a href="${shortUrl}" target="_blank">${shortUrl}</a>`;
+    }
+
+    window.onload = () => {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get("r");
+      if (code) {
+        const db = getDatabase();
+        if (db[code]) {
+          window.location.href = db[code];
+        } else {
+          alert("Kısa link bulunamadı.");
+        }
+      }
+    };
+  </script>
+</body>
+</html>
